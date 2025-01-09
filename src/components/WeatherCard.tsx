@@ -6,7 +6,8 @@ import {
     Grid,
     Box,
     IconButton,
-    Tooltip
+    Tooltip,
+    ButtonBase
 } from '@mui/material';
 import {
     WbSunny as SunIcon,
@@ -15,7 +16,7 @@ import {
     CompareArrows as PressureIcon
 } from '@mui/icons-material';
 import { WeatherData } from '../types/weather';
-import { getWeatherIcon } from '../services/weatherApi';
+import { getWeatherIcon, formatTemperature } from '../services/weatherApi';
 
 interface WeatherCardProps {
     data: WeatherData;
@@ -48,20 +49,22 @@ const WeatherCard: React.FC<WeatherCardProps> = ({
                             alt={data.weather[0].description}
                             style={{ width: 100, height: 100 }}
                         />
-                        <Typography 
-                            variant="h2" 
-                            component="div" 
-                            sx={{ cursor: 'pointer' }}
-                            onClick={onTemperatureUnitChange}
-                        >
-                            {Math.round(data.main.temp)}°{isCelsius ? 'C' : 'F'}
-                        </Typography>
+                        <Tooltip title={isCelsius ? 'Fahrenheit birimine geç' : 'Celsius birimine geç'} describeChild>
+                            <ButtonBase
+                                onClick={onTemperatureUnitChange}
+                                sx={{ borderRadius: 2, px: 1 }}
+                            >
+                                <Typography variant="h2" component="span">
+                                    {formatTemperature(data.main.temp, isCelsius)}
+                                </Typography>
+                            </ButtonBase>
+                        </Tooltip>
                     </Box>
                     <Typography variant="h6" color="text.secondary">
                         {data.weather[0].description}
                     </Typography>
                     <Typography variant="body1">
-                        Hissedilen: {Math.round(data.main.feels_like)}°{isCelsius ? 'C' : 'F'}
+                        Hissedilen: {formatTemperature(data.main.feels_like, isCelsius)}
                     </Typography>
                 </Box>
 

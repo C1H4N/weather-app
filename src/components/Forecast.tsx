@@ -9,7 +9,7 @@ import {
     useMediaQuery
 } from '@mui/material';
 import { ForecastData } from '../types/weather';
-import { getWeatherIcon } from '../services/weatherApi';
+import { getWeatherIcon, formatTemperature } from '../services/weatherApi';
 
 interface ForecastProps {
     data: ForecastData;
@@ -64,7 +64,7 @@ const Forecast: React.FC<ForecastProps> = ({ data, isCelsius = true }) => {
                                     style={{ width: 50, height: 50 }}
                                 />
                                 <Typography variant="body2">
-                                    {Math.round(forecast.main.temp)}°{isCelsius ? 'C' : 'F'}
+                                    {formatTemperature(forecast.main.temp, isCelsius)}
                                 </Typography>
                                 <Typography variant="caption" display="block" color="text.secondary">
                                     {forecast.weather[0].description}
