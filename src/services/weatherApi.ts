@@ -1,21 +1,28 @@
 import axios from 'axios';
-import { WeatherData, ForecastData, WeatherError } from '../types/weather';
+import { WeatherData, ForecastData, WeatherError, GeoLocation, SearchQuery } from '../types/weather';
 
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const GEO_URL = 'https://api.openweathermap.org/geo/1.0';
 
-export const getWeather = async (city: string): Promise<WeatherData> => {
+// Şehir adı veya koordinata göre sorgu parametreleri
+const locationParams = (query: SearchQuery) =>
+    typeof query === 'string' ? { q: query } : { lat: query.lat, lon: query.lon };
+
+export const getWeather = async (query: SearchQuery, signal?: AbortSignal): Promise<WeatherData> => {
     try {
         const response = await axios.get(`${BASE_URL}/weather`, {
             params: {
-                q: city,
+                ...locationParams(query),
                 appid: API_KEY,
                 units: 'metric',
                 lang: 'tr'
-            }
+            },
+            signal
         });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) throw error;
         if (axios.isAxiosError(error)) {
             const weatherError: WeatherError = {
                 message: error.response?.data.message || 'Hava durumu bilgisi alınamadı',
@@ -27,19 +34,21 @@ export const getWeather = async (city: string): Promise<WeatherData> => {
     }
 };
 
-export const getForecast = async (city: string): Promise<ForecastData> => {
+export const getForecast = async (query: SearchQuery, signal?: AbortSignal): Promise<ForecastData> => {
     try {
         const response = await axios.get(`${BASE_URL}/forecast`, {
             params: {
-                q: city,
+                ...locationParams(query),
                 appid: API_KEY,
                 units: 'metric',
                 lang: 'tr',
                 cnt: 40 // 5 günlük tahmin (3 saatlik aralıklarla)
-            }
+            },
+            signal
         });
         return response.data;
     } catch (error) {
+        if (axios.isCancel(error)) throw error;
         if (axios.isAxiosError(error)) {
             const weatherError: WeatherError = {
                 message: error.response?.data.message || '5 günlük tahmin alınamadı',
@@ -49,6 +58,19 @@ export const getForecast = async (city: string): Promise<ForecastData> => {
         }
         throw new Error('Beklenmeyen bir hata oluştu');
     }
+};
+
+// Şehir önerileri için OpenWeather Geocoding API
+export const searchCities = async (query: string, signal?: AbortSignal): Promise<GeoLocation[]> => {
+    const response = await axios.get<GeoLocation[]>(`${GEO_URL}/direct`, {
+        params: {
+            q: query,
+            limit: 5,
+            appid: API_KEY
+        },
+        signal
+    });
+    return response.data;
 };
 
 // Hava durumu ikonunu almak için yardımcı fonksiyon

@@ -11,9 +11,11 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { turkishCities } from '../services/cityData';
+import { searchCities } from '../services/weatherApi';
+import { SearchQuery } from '../types/weather';
 
 interface SearchBarProps {
-    onSearch: (city: string) => void;
+    onSearch: (query: SearchQuery) => void;
     onLocationSearch?: () => void;
 }
 
@@ -22,7 +24,15 @@ interface CityOption {
     country: string;
     state?: string;
     normalizedName?: string;
+    lat?: number;
+    lon?: number;
 }
+
+// Öneriden arama sorgusu oluştur: koordinat varsa onu, yoksa "şehir,ülke" kullan
+const toSearchQuery = (option: CityOption): SearchQuery =>
+    option.lat !== undefined && option.lon !== undefined
+        ? { lat: option.lat, lon: option.lon }
+        : `${option.name},${option.country}`;
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => {
     const [open, setOpen] = useState(false);
@@ -30,7 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
     const [options, setOptions] = useState<CityOption[]>([]);
     const [loading, setLoading] = useState(false);
     
-    const fetchCities = useCallback(async (input: string) => {
+    const fetchCities = useCallback(async (input: string, signal: AbortSignal) => {
         if (input.length < 2) return;
         
         setLoading(true);
@@ -52,13 +62,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
             }
 
             // Türkiye şehri bulunamazsa, global arama yap
-            const response = await fetch(
-                `https://api.openweathermap.org/geo/1.0/direct?q=${input}&limit=5&appid=${import.meta.env.VITE_OPENWEATHER_API_KEY}`
-            );
-            if (!response.ok) throw new Error('Şehir araması başarısız oldu');
-            
-            const data = await response.json();
-            const uniqueCities = data.reduce((acc: CityOption[], city: any) => {
+            const data = await searchCities(input, signal);
+            if (signal.aborted) return;
+
+            const uniqueCities = data.reduce((acc: CityOption[], city) => {
                 const exists = acc.some(
                     c => c.name.toLowerCase() === city.name.toLowerCase() && 
                     c.country === city.country
@@ -67,7 +74,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
                     acc.push({
                         name: city.name,
                         country: city.country,
-                        state: city.state
+                        state: city.state,
+                        lat: city.lat,
+                        lon: city.lon
                     });
                 }
                 return acc;
@@ -75,6 +84,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
             
             setOptions(uniqueCities);
         } catch (error) {
+            if (signal.aborted) return;
             console.error('Şehir arama hatası:', error);
             setOptions([]);
         } finally {
@@ -84,10 +94,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
 
     useEffect(() => {
         if (inputValue.trim()) {
+            // Giriş değişince bekleyen aramayı ve devam eden isteği iptal et
+            const controller = new AbortController();
             const timer = setTimeout(() => {
-                fetchCities(inputValue);
+                fetchCities(inputValue, controller.signal);
             }, 300);
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(timer);
+                controller.abort();
+            };
         } else {
             setOptions([]);
         }
@@ -130,7 +145,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
                     filterOptions={(x) => x}
                     onChange={(_, newValue) => {
                         if (newValue) {
-                            onSearch(typeof newValue === 'string' ? newValue : newValue.name);
+                            onSearch(typeof newValue === 'string' ? newValue : toSearchQuery(newValue));
                         }
                     }}
                     renderInput={(params) => (

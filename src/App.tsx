@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Container, Box, Alert, CircularProgress, ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import SearchBar from './components/SearchBar';
 import WeatherCard from './components/WeatherCard';
 import Forecast from './components/Forecast';
 import { getWeather, getForecast } from './services/weatherApi';
-import { WeatherData, ForecastData, WeatherError } from './types/weather';
+import { WeatherData, ForecastData, WeatherError, SearchQuery } from './types/weather';
 
 const theme = createTheme({
   palette: {
@@ -12,32 +12,40 @@ const theme = createTheme({
   },
 });
 
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
-
 function App() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<ForecastData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isCelsius, setIsCelsius] = useState(true);
+  const requestRef = useRef<AbortController | null>(null);
 
-  const handleSearch = useCallback(async (city: string) => {
+  const handleSearch = useCallback(async (query: SearchQuery) => {
+    // Önceki isteği iptal et, geç gelen eski yanıt yenisinin üzerine yazmasın
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+
     setLoading(true);
     setError(null);
     try {
       const [weatherData, forecastData] = await Promise.all([
-        getWeather(city),
-        getForecast(city)
+        getWeather(query, controller.signal),
+        getForecast(query, controller.signal)
       ]);
+      if (controller.signal.aborted) return;
       setWeather(weatherData);
       setForecast(forecastData);
     } catch (err) {
+      if (controller.signal.aborted) return;
       const error = err as WeatherError;
       setError(error.message || 'Bir hata oluştu');
       setWeather(null);
       setForecast(null);
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -57,35 +65,11 @@ function App() {
     };
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          console.log('Konum alındı:', { latitude, longitude });
-          
-          const response = await fetch(
-            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${API_KEY}`
-          );
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log('Konum verisi:', data);
-          
-          if (data && data.length > 0) {
-            const locationData = data[0];
-            console.log('Şehir bulundu:', locationData.name);
-            await handleSearch(locationData.name);
-          } else {
-            setError('Bu konum için şehir bilgisi bulunamadı');
-          }
-        } catch (err) {
-          console.error('Konum hatası:', err);
-          setError('Konum bilgisi alınamadı: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata'));
-        } finally {
-          setLoading(false);
-        }
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('Konum alındı:', { latitude, longitude });
+        // Şehir adına çevirmeden doğrudan koordinatla ara
+        handleSearch({ lat: latitude, lon: longitude });
       },
       (err) => {
         console.error('Geolocation hatası:', err);

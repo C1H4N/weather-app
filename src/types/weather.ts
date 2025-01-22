@@ -44,6 +44,20 @@ export interface ForecastData {
     };
 }
 
+export interface Coordinates {
+    lat: number;
+    lon: number;
+}
+
+// Şehir adı veya koordinat ile arama
+export type SearchQuery = string | Coordinates;
+
+export interface GeoLocation extends Coordinates {
+    name: string;
+    country: string;
+    state?: string;
+}
+
 export interface WeatherError {
     message: string;
     code?: number;
