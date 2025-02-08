@@ -20,14 +20,20 @@ const Forecast: React.FC<ForecastProps> = ({ data, isCelsius = true }) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // Günlük tahminleri grupla (her gün için ilk tahmin)
+    // Günlük tahminleri grupla (her gün için öğlene en yakın tahmin)
+    const today = new Date().toLocaleDateString('tr-TR');
+    const middayDistance = (dt: number) => Math.abs(new Date(dt * 1000).getHours() - 12);
     const dailyForecasts = data.list.reduce((acc: any[], forecast) => {
         const date = new Date(forecast.dt * 1000).toLocaleDateString('tr-TR');
-        if (!acc.find(f => new Date(f.dt * 1000).toLocaleDateString('tr-TR') === date)) {
+        if (date === today) return acc; // Bugünü atla
+        const index = acc.findIndex(f => new Date(f.dt * 1000).toLocaleDateString('tr-TR') === date);
+        if (index === -1) {
             acc.push(forecast);
+        } else if (middayDistance(forecast.dt) < middayDistance(acc[index].dt)) {
+            acc[index] = forecast;
         }
         return acc;
-    }, []).slice(1, 6); // İlk günü atla ve sonraki 5 günü al
+    }, []).slice(0, 5); // Sonraki 5 günü al
 
     const formatDate = (timestamp: number) => {
         const date = new Date(timestamp * 1000);

@@ -5,6 +5,26 @@ const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 const GEO_URL = 'https://api.openweathermap.org/geo/1.0';
 
+if (!API_KEY) {
+    console.warn('VITE_OPENWEATHER_API_KEY tanımlı değil. .env.example dosyasını .env olarak kopyalayıp API anahtarınızı ekleyin.');
+}
+
+// API hata kodlarını kullanıcıya gösterilecek Türkçe mesajlara çevir
+const getErrorMessage = (status: number | undefined, fallback: string): string => {
+    switch (status) {
+        case undefined:
+            return 'Sunucuya ulaşılamadı. Lütfen internet bağlantınızı kontrol edin.';
+        case 401:
+            return 'API anahtarı geçersiz veya eksik.';
+        case 404:
+            return 'Şehir bulunamadı. Lütfen şehir adını kontrol edin.';
+        case 429:
+            return 'Çok fazla istek gönderildi. Lütfen biraz sonra tekrar deneyin.';
+        default:
+            return fallback;
+    }
+};
+
 // Şehir adı veya koordinata göre sorgu parametreleri
 const locationParams = (query: SearchQuery) =>
     typeof query === 'string' ? { q: query } : { lat: query.lat, lon: query.lon };
@@ -25,7 +45,7 @@ export const getWeather = async (query: SearchQuery, signal?: AbortSignal): Prom
         if (axios.isCancel(error)) throw error;
         if (axios.isAxiosError(error)) {
             const weatherError: WeatherError = {
-                message: error.response?.data.message || 'Hava durumu bilgisi alınamadı',
+                message: getErrorMessage(error.response?.status, 'Hava durumu bilgisi alınamadı'),
                 code: error.response?.status
             };
             throw weatherError;
@@ -51,7 +71,7 @@ export const getForecast = async (query: SearchQuery, signal?: AbortSignal): Pro
         if (axios.isCancel(error)) throw error;
         if (axios.isAxiosError(error)) {
             const weatherError: WeatherError = {
-                message: error.response?.data.message || '5 günlük tahmin alınamadı',
+                message: getErrorMessage(error.response?.status, '5 günlük tahmin alınamadı'),
                 code: error.response?.status
             };
             throw weatherError;

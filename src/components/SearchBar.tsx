@@ -46,12 +46,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
         setLoading(true);
         try {
             // Önce Türkiye şehirlerini kontrol et
-            const normalizedInput = input.toLowerCase().replace(/[ğüşıöçİĞÜŞÖÇ]/g, c => 
+            const normalizedInput = input.toLocaleLowerCase('tr-TR').replace(/[ğüşıöçİĞÜŞÖÇ]/g, c => 
                 ({ 'ğ': 'g', 'ü': 'u', 'ş': 's', 'ı': 'i', 'ö': 'o', 'ç': 'c',
                    'İ': 'i', 'Ğ': 'g', 'Ü': 'u', 'Ş': 's', 'Ö': 'o', 'Ç': 'c' }[c] || c));
             
             const turkishMatches = turkishCities.filter(city => 
-                city.name.toLowerCase().includes(input.toLowerCase()) ||
+                city.name.toLocaleLowerCase('tr-TR').includes(input.toLocaleLowerCase('tr-TR')) ||
                 city.normalizedName.includes(normalizedInput)
             );
 
