@@ -23,7 +23,7 @@ const Forecast: React.FC<ForecastProps> = ({ data, isCelsius = true }) => {
     // Günlük tahminleri grupla (her gün için öğlene en yakın tahmin)
     const today = new Date().toLocaleDateString('tr-TR');
     const middayDistance = (dt: number) => Math.abs(new Date(dt * 1000).getHours() - 12);
-    const dailyForecasts = data.list.reduce((acc: any[], forecast) => {
+    const dailyForecasts = data.list.reduce((acc: ForecastData['list'], forecast) => {
         const date = new Date(forecast.dt * 1000).toLocaleDateString('tr-TR');
         if (date === today) return acc; // Bugünü atla
         const index = acc.findIndex(f => new Date(f.dt * 1000).toLocaleDateString('tr-TR') === date);

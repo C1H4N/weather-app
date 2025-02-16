@@ -67,7 +67,6 @@ function App() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        console.log('Konum alındı:', { latitude, longitude });
         // Şehir adına çevirmeden doğrudan koordinatla ara
         handleSearch({ lat: latitude, lon: longitude });
       },

@@ -157,27 +157,24 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onLocationSearch }) => 
                                 ...params.InputProps,
                                 endAdornment: (
                                     <InputAdornment position="end">
-                                        {loading ? (
+                                        {loading && (
                                             <CircularProgress color="inherit" size={20} />
-                                        ) : (
-                                            <>
-                                                <IconButton 
-                                                    type="submit"
-                                                    sx={{ p: '10px' }} 
-                                                    aria-label="search"
-                                                >
-                                                    <SearchIcon />
-                                                </IconButton>
-                                                {onLocationSearch && (
-                                                    <IconButton
-                                                        sx={{ p: '10px' }}
-                                                        aria-label="use current location"
-                                                        onClick={onLocationSearch}
-                                                    >
-                                                        <LocationOnIcon />
-                                                    </IconButton>
-                                                )}
-                                            </>
+                                        )}
+                                        <IconButton
+                                            type="submit"
+                                            sx={{ p: '10px' }}
+                                            aria-label="search"
+                                        >
+                                            <SearchIcon />
+                                        </IconButton>
+                                        {onLocationSearch && (
+                                            <IconButton
+                                                sx={{ p: '10px' }}
+                                                aria-label="use current location"
+                                                onClick={onLocationSearch}
+                                            >
+                                                <LocationOnIcon />
+                                            </IconButton>
                                         )}
                                     </InputAdornment>
                                 ),
