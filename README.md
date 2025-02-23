@@ -5,10 +5,10 @@ Bu proje, React ve TypeScript kullanılarak geliştirilmiş modern bir hava duru
 ## Özellikler
 
 - 🌍 Dünya genelinde şehir bazlı hava durumu bilgisi
-- 📍 Konum bazlı hava durumu
-- 🔍 Akıllı şehir arama (Türkçe karakter desteği)
-- 📅 5 günlük hava durumu tahmini
-- 🌡️ Sıcaklık birimi değiştirme (Celsius/Fahrenheit)
+- 📍 Konum bazlı hava durumu (tarayıcı konumu ile)
+- 🔍 Akıllı şehir arama: 81 il için anında öneri, diğer şehirler için OpenWeather Geocoding (Türkçe karakter desteği)
+- 📅 5 günlük hava durumu tahmini (her gün için öğle saatine en yakın tahmin)
+- 🌡️ Sıcaklık birimi değiştirme (Celsius/Fahrenheit, sıcaklık değerine tıklayarak)
 - 📱 Responsive tasarım
 - ✨ Modern ve kullanıcı dostu arayüz
 
@@ -36,11 +36,16 @@ npm install
 npm run dev
 ```
 
+## API Anahtarı Hakkında Not
+
+`VITE_` ile başlayan ortam değişkenleri derleme sırasında JavaScript paketine gömülür. `.env` dosyası Git'e eklenmez, ancak yayınlanan sürümde API anahtarı tarayıcının geliştirici araçlarından görülebilir. Bu yüzden ücretli plana bağlı olmayan, ücretsiz bir anahtar kullanın; anahtarın tamamen gizli kalması gerekiyorsa istekleri kendi sunucunuz veya bir serverless fonksiyon üzerinden yönlendirin.
+
 ## Kullanılan Teknolojiler
 
 - React
 - TypeScript
 - Material-UI
+- Axios
 - OpenWeatherMap API
 - Vite
 
